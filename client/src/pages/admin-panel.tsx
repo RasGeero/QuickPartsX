@@ -290,7 +290,7 @@ export default function AdminPanel() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleToggleVerification(seller.id, seller.isVerified)}
+                              onClick={() => handleToggleVerification(seller.id, seller.isVerified ?? false)}
                               disabled={verifySellerMutation.isPending}
                               title={seller.isVerified ? 'Revoke Verification' : 'Verify Seller'}
                               data-testid={`button-toggle-verification-${seller.id}`}
@@ -377,7 +377,7 @@ export default function AdminPanel() {
                           by {part.seller.businessName || `${part.seller.firstName || ''} ${part.seller.lastName || ''}`.trim() || 'Unknown'}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Added {new Date(part.createdAt).toLocaleDateString()}
+                          Added {part.createdAt ? new Date(part.createdAt).toLocaleDateString() : 'Unknown'}
                         </p>
                       </div>
                     </div>
