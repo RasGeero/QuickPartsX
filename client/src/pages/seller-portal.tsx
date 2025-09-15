@@ -347,20 +347,20 @@ export default function SellerPortal() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-2xl font-bold text-primary">{user?.totalListings || 0}</div>
+              <div className="text-2xl font-bold text-primary">{(user as any)?.totalListings || 0}</div>
               <div className="text-muted-foreground">Active Listings</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
-              <div className="text-2xl font-bold text-success">{user?.totalRatings || 0}</div>
+              <div className="text-2xl font-bold text-success">{(user as any)?.totalRatings || 0}</div>
               <div className="text-muted-foreground">Total Reviews</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6 text-center">
               <div className="text-2xl font-bold text-secondary">
-                {user?.averageRating ? user.averageRating.toFixed(1) : '0.0'}
+                {(user as any)?.averageRating ? (user as any).averageRating.toFixed(1) : '0.0'}
               </div>
               <div className="text-muted-foreground">Average Rating</div>
             </CardContent>
@@ -437,7 +437,7 @@ export default function SellerPortal() {
                       <FormItem>
                         <FormLabel>Price (GHS)</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="450" {...field} data-testid="input-price" />
+                          <Input type="number" placeholder="450" {...field} value={field.value || ''} data-testid="input-price" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -456,6 +456,7 @@ export default function SellerPortal() {
                           placeholder="Describe the part, its condition, warranty, etc."
                           rows={3}
                           {...field}
+                          value={field.value || ''}
                           data-testid="textarea-description"
                         />
                       </FormControl>

@@ -106,7 +106,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sellerId: userId,
         images: req.files ? req.files.map((file: any) => `/uploads/${file.filename}`) : [],
       });
-
       const part = await storage.createPart(partData);
       res.status(201).json(part);
     } catch (error) {
