@@ -12,7 +12,7 @@ import {
   type UserWithStats,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, count, avg, sql } from "drizzle-orm";
+import { eq, desc, and, ilike, count, avg, sql, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -145,8 +145,13 @@ export class DatabaseStorage implements IStorage {
       const conditions = [eq(parts.isActive, true)];
 
       if (filters.search) {
+        const pattern = `%${filters.search}%`;
         conditions.push(
-          sql`(${ilike(parts.name, `%${filters.search}%`)} OR ${ilike(parts.carModel, `%${filters.search}%`)})`
+          or(
+            ilike(parts.name, pattern),
+            ilike(parts.carModel, pattern),
+            ilike(parts.description, pattern)
+          )
         );
       }
 
