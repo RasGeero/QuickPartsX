@@ -39,13 +39,13 @@ export default function AdminPanel() {
     }
   }, [isAuthenticated, authLoading, user, toast]);
 
-  const { data: sellers = [], isLoading: sellersLoading } = useQuery<UserWithStats[]>({
+  const { data: sellers = [], isLoading: sellersLoading, error: sellersError, refetch: refetchSellers } = useQuery<UserWithStats[]>({
     queryKey: ['/api/admin/sellers'],
     enabled: !!user?.isAdmin && isAuthenticated,
     retry: false,
   });
 
-  const { data: allParts = [], isLoading: partsLoading } = useQuery<PartWithSeller[]>({
+  const { data: allParts = [], isLoading: partsLoading, error: partsError, refetch: refetchParts } = useQuery<PartWithSeller[]>({
     queryKey: ['/api/admin/parts'],
     enabled: !!user?.isAdmin && isAuthenticated,
     retry: false,
@@ -210,7 +210,19 @@ export default function AdminPanel() {
             <CardTitle>Seller Management</CardTitle>
           </CardHeader>
           <CardContent>
-            {sellersLoading ? (
+            {sellersError ? (
+              <div className="text-center py-12">
+                <i className="fas fa-exclamation-triangle text-4xl text-destructive mb-4"></i>
+                <h3 className="text-lg font-semibold mb-2">Failed to load sellers</h3>
+                <p className="text-muted-foreground mb-4">
+                  {sellersError instanceof Error ? sellersError.message : 'Something went wrong while fetching sellers'}
+                </p>
+                <Button onClick={() => refetchSellers()} data-testid="button-retry-sellers">
+                  <i className="fas fa-redo mr-2"></i>
+                  Try Again
+                </Button>
+              </div>
+            ) : sellersLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
@@ -315,7 +327,19 @@ export default function AdminPanel() {
             <CardTitle>Recent Listings</CardTitle>
           </CardHeader>
           <CardContent>
-            {partsLoading ? (
+            {partsError ? (
+              <div className="text-center py-12">
+                <i className="fas fa-exclamation-triangle text-4xl text-destructive mb-4"></i>
+                <h3 className="text-lg font-semibold mb-2">Failed to load listings</h3>
+                <p className="text-muted-foreground mb-4">
+                  {partsError instanceof Error ? partsError.message : 'Something went wrong while fetching listings'}
+                </p>
+                <Button onClick={() => refetchParts()} data-testid="button-retry-parts">
+                  <i className="fas fa-redo mr-2"></i>
+                  Try Again
+                </Button>
+              </div>
+            ) : partsLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton key={i} className="h-20 w-full" />

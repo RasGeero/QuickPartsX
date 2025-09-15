@@ -34,12 +34,12 @@ export default function SellerProfile() {
     }
   }, [isAuthenticated, authLoading, toast]);
 
-  const { data: seller, isLoading: sellerLoading } = useQuery<UserWithStats>({
+  const { data: seller, isLoading: sellerLoading, error: sellerError, refetch: refetchSeller } = useQuery<UserWithStats>({
     queryKey: ['/api/seller', sellerId],
     enabled: !!sellerId,
   });
 
-  const { data: sellerParts = [], isLoading: partsLoading } = useQuery<Part[]>({
+  const { data: sellerParts = [], isLoading: partsLoading, error: partsError, refetch: refetchParts } = useQuery<Part[]>({
     queryKey: ['/api/seller', sellerId, 'parts'],
     enabled: !!sellerId,
   });
@@ -114,6 +114,29 @@ export default function SellerProfile() {
   const handleRating = (rating: number) => {
     ratingMutation.mutate({ rating });
   };
+
+  if (sellerError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <i className="fas fa-exclamation-triangle text-4xl text-destructive mb-4"></i>
+              <h2 className="text-xl font-semibold mb-2">Failed to load seller</h2>
+              <p className="text-muted-foreground mb-4">
+                {sellerError instanceof Error ? sellerError.message : 'Something went wrong while fetching seller information'}
+              </p>
+              <Button onClick={() => refetchSeller()} data-testid="button-retry-seller">
+                <i className="fas fa-redo mr-2"></i>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading || sellerLoading) {
     return (
@@ -221,7 +244,21 @@ export default function SellerProfile() {
         {/* Seller's Parts */}
         <div className="mb-6">
           <h2 className="text-xl font-bold mb-4">Parts by this seller ({seller.totalListings})</h2>
-          {partsLoading ? (
+          {partsError ? (
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <i className="fas fa-exclamation-triangle text-4xl text-destructive mb-4"></i>
+                <h3 className="text-lg font-semibold mb-2">Failed to load parts</h3>
+                <p className="text-muted-foreground mb-4">
+                  {partsError instanceof Error ? partsError.message : 'Something went wrong while fetching seller parts'}
+                </p>
+                <Button onClick={() => refetchParts()} data-testid="button-retry-parts">
+                  <i className="fas fa-redo mr-2"></i>
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : partsLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-80 w-full rounded-lg" />
