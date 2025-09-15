@@ -1,12 +1,20 @@
 import { useLocation } from "wouter";
 import Navbar from "@/components/navbar";
+import { useState } from "react";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
+  const [searchForm, setSearchForm] = useState({ carModel: '', partName: '' });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setLocation("/parts");
+    const params = new URLSearchParams();
+    if (searchForm.carModel.trim()) {
+      params.append('search', `${searchForm.carModel.trim()} ${searchForm.partName.trim()}`.trim());
+    } else if (searchForm.partName.trim()) {
+      params.append('search', searchForm.partName.trim());
+    }
+    setLocation(`/parts${params.toString() ? '?' + params.toString() : ''}`);
   };
 
   return (
@@ -32,6 +40,8 @@ export default function Landing() {
                     placeholder="e.g., Toyota Corolla" 
                     className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                     data-testid="input-car-model"
+                    value={searchForm.carModel}
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, carModel: e.target.value }))}
                   />
                 </div>
                 <div>
@@ -41,6 +51,8 @@ export default function Landing() {
                     placeholder="e.g., Brake Pads" 
                     className="w-full px-4 py-3 border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
                     data-testid="input-part-name"
+                    value={searchForm.partName}
+                    onChange={(e) => setSearchForm(prev => ({ ...prev, partName: e.target.value }))}
                   />
                 </div>
               </div>

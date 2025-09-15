@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Navbar from "@/components/navbar";
@@ -21,6 +21,15 @@ export default function AllParts() {
     sellerType: 'all-sellers',
     maxPrice: '',
   });
+
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      setFilters(prev => ({ ...prev, search: searchParam }));
+    }
+  }, []);
 
   const { data: parts = [], isLoading, error, refetch } = useQuery<PartWithSeller[]>({
     queryKey: ['/api/parts', filters],
