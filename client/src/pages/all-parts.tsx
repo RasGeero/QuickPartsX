@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { PartWithSeller } from "@shared/schema";
+import { VehicleDataService } from "@shared/vehicle-data";
 
 export default function AllParts() {
   const [, setLocation] = useLocation();
@@ -16,6 +17,10 @@ export default function AllParts() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filters, setFilters] = useState({
     search: '',
+    vehicleType: '',
+    year: '',
+    make: '',
+    model: '',
     condition: 'all-conditions',
     location: 'all-locations',
     sellerType: 'all-sellers',
@@ -50,9 +55,51 @@ export default function AllParts() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  // Vehicle filter state and cascading logic
+  const handleVehicleFilterChange = (key: string, value: string) => {
+    if (key === 'vehicleType') {
+      // Reset dependent fields when vehicle type changes
+      setFilters(prev => ({
+        ...prev,
+        vehicleType: value,
+        year: '',
+        make: '',
+        model: ''
+      }));
+    } else if (key === 'year') {
+      // Reset dependent fields when year changes
+      setFilters(prev => ({
+        ...prev,
+        year: value,
+        make: '',
+        model: ''
+      }));
+    } else if (key === 'make') {
+      // Reset model when make changes
+      setFilters(prev => ({
+        ...prev,
+        make: value,
+        model: ''
+      }));
+    } else if (key === 'model') {
+      setFilters(prev => ({ ...prev, model: value }));
+    }
+  };
+
+  // Get available options for cascading dropdowns
+  const vehicleOptions = VehicleDataService.getNextOptions({
+    vehicleType: filters.vehicleType || undefined,
+    year: filters.year ? Number(filters.year) : undefined,
+    make: filters.make || undefined,
+  });
+
   const clearFilters = () => {
     setFilters({
       search: '',
+      vehicleType: '',
+      year: '',
+      make: '',
+      model: '',
       condition: 'all-conditions',
       location: 'all-locations',
       sellerType: 'all-sellers',
@@ -96,67 +143,132 @@ export default function AllParts() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-card border border-border rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-            <Input
-              placeholder="Search parts or car models..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              data-testid="input-search-filter"
-            />
-            
-            <Select value={filters.condition} onValueChange={(value) => handleFilterChange('condition', value)}>
-              <SelectTrigger data-testid="select-condition">
-                <SelectValue placeholder="All Conditions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-conditions">All Conditions</SelectItem>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="used">Used</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
-              <SelectTrigger data-testid="select-location">
-                <SelectValue placeholder="All Locations" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-locations">All Locations</SelectItem>
-                <SelectItem value="Accra">Accra</SelectItem>
-                <SelectItem value="Kumasi">Kumasi</SelectItem>
-                <SelectItem value="Tamale">Tamale</SelectItem>
-                <SelectItem value="Cape Coast">Cape Coast</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={filters.sellerType} onValueChange={(value) => handleFilterChange('sellerType', value)}>
-              <SelectTrigger data-testid="select-seller-type">
-                <SelectValue placeholder="All Sellers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-sellers">All Sellers</SelectItem>
-                <SelectItem value="private">Private</SelectItem>
-                <SelectItem value="business">Business</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Input
-              type="number"
-              placeholder="Max Price (GHS)"
-              value={filters.maxPrice}
-              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-              data-testid="input-max-price"
-            />
-          </div>
+        {/* Vehicle Search Filters */}
+        <div className="bg-card border border-border rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold mb-4">Vehicle Criteria</h3>
           
-          <Button 
-            variant="outline" 
-            onClick={clearFilters}
-            data-testid="button-clear-filters"
-          >
-            Clear Filters
-          </Button>
+          {/* Vehicle Selection - Cascading Dropdowns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Vehicle Type */}
+            <Select 
+              value={filters.vehicleType} 
+              onValueChange={(value) => handleVehicleFilterChange('vehicleType', value)}
+            >
+              <SelectTrigger data-testid="select-vehicle-type" className="h-12">
+                <SelectValue placeholder="Select a Vehicle Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {VehicleDataService.getVehicleTypes().map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Year */}
+            <Select 
+              value={filters.year} 
+              onValueChange={(value) => handleVehicleFilterChange('year', value)}
+              disabled={!filters.vehicleType}
+            >
+              <SelectTrigger data-testid="select-year" className="h-12">
+                <SelectValue placeholder="Select Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleOptions.years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Make */}
+            <Select 
+              value={filters.make} 
+              onValueChange={(value) => handleVehicleFilterChange('make', value)}
+              disabled={!filters.vehicleType || !filters.year}
+            >
+              <SelectTrigger data-testid="select-make" className="h-12">
+                <SelectValue placeholder="Select Make" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleOptions.makes.map((make) => (
+                  <SelectItem key={make} value={make}>{make}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Model */}
+            <Select 
+              value={filters.model} 
+              onValueChange={(value) => handleVehicleFilterChange('model', value)}
+              disabled={!filters.vehicleType || !filters.year || !filters.make}
+            >
+              <SelectTrigger data-testid="select-model" className="h-12">
+                <SelectValue placeholder="Select Model" />
+              </SelectTrigger>
+              <SelectContent>
+                {vehicleOptions.models.map((model) => (
+                  <SelectItem key={model} value={model}>{model}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Additional Filters */}
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium mb-3 text-muted-foreground">Additional Filters</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Text Search */}
+              <Input
+                placeholder="Search parts..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                data-testid="input-search-filter"
+              />
+              
+              {/* Condition */}
+              <Select value={filters.condition} onValueChange={(value) => handleFilterChange('condition', value)}>
+                <SelectTrigger data-testid="select-condition">
+                  <SelectValue placeholder="All Conditions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-conditions">All Conditions</SelectItem>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="used">Used</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Location */}
+              <Select value={filters.location} onValueChange={(value) => handleFilterChange('location', value)}>
+                <SelectTrigger data-testid="select-location">
+                  <SelectValue placeholder="All Locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-locations">All Locations</SelectItem>
+                  <SelectItem value="Accra">Accra</SelectItem>
+                  <SelectItem value="Kumasi">Kumasi</SelectItem>
+                  <SelectItem value="Tamale">Tamale</SelectItem>
+                  <SelectItem value="Cape Coast">Cape Coast</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Max Price */}
+              <Input
+                type="number"
+                placeholder="Max Price (GHS)"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                data-testid="input-max-price"
+              />
+            </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={clearFilters}
+              data-testid="button-clear-filters"
+            >
+              Clear Filters
+            </Button>
+          </div>
         </div>
 
         {/* Parts Grid/List */}
