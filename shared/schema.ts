@@ -49,7 +49,10 @@ export const parts = pgTable("parts", {
   sellerId: varchar("seller_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: varchar("name").notNull(),
   description: text("description"),
-  carModel: varchar("car_model").notNull(),
+  vehicleType: varchar("vehicle_type"),
+  year: integer("year"),
+  make: varchar("make"),
+  model: varchar("model"),
   condition: varchar("condition", { enum: ["new", "used"] }).notNull(),
   price: decimal("price", { precision: 10, scale: 2 }),
   images: text("images").array().default([]), // Array of image URLs
