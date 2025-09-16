@@ -24,7 +24,10 @@ export interface IStorage {
   // Parts operations
   getAllParts(filters?: {
     search?: string;
-    carModel?: string;
+    vehicleType?: string;
+    year?: number;
+    make?: string;
+    model?: string;
     condition?: string;
     location?: string;
     sellerType?: string;
@@ -106,19 +109,75 @@ export class DatabaseStorage implements IStorage {
   // Parts operations
   async getAllParts(filters?: {
     search?: string;
-    carModel?: string;
+    vehicleType?: string;
+    year?: number;
+    make?: string;
+    model?: string;
     condition?: string;
     location?: string;
     sellerType?: string;
     maxPrice?: number;
   }): Promise<PartWithSeller[]> {
-    let query = db
+    // Build all conditions first
+    const conditions = [eq(parts.isActive, true)];
+
+    if (filters) {
+      if (filters.search) {
+        const pattern = `%${filters.search}%`;
+        conditions.push(
+          or(
+            ilike(parts.name, pattern),
+            ilike(parts.make, pattern),
+            ilike(parts.model, pattern),
+            ilike(parts.description, pattern)
+          )!
+        );
+      }
+
+      if (filters.vehicleType) {
+        conditions.push(ilike(parts.vehicleType, `%${filters.vehicleType}%`)!);
+      }
+
+      if (filters.year) {
+        conditions.push(eq(parts.year, filters.year));
+      }
+
+      if (filters.make) {
+        conditions.push(ilike(parts.make, `%${filters.make}%`)!);
+      }
+
+      if (filters.model) {
+        conditions.push(ilike(parts.model, `%${filters.model}%`)!);
+      }
+
+      if (filters.condition) {
+        conditions.push(eq(parts.condition, filters.condition as "new" | "used"));
+      }
+
+      if (filters.location) {
+        conditions.push(ilike(users.location, `%${filters.location}%`));
+      }
+
+      if (filters.sellerType) {
+        conditions.push(eq(users.sellerType, filters.sellerType as "private" | "business"));
+      }
+
+      if (filters.maxPrice) {
+        conditions.push(sql`${parts.price} <= ${filters.maxPrice}`);
+      }
+    }
+
+    // Build and execute query with all conditions
+    return await db
       .select({
         id: parts.id,
         sellerId: parts.sellerId,
         name: parts.name,
         description: parts.description,
-        carModel: parts.carModel,
+        vehicleType: parts.vehicleType,
+        year: parts.year,
+        make: parts.make,
+        model: parts.model,
         condition: parts.condition,
         price: parts.price,
         images: parts.images,
@@ -137,48 +196,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(parts)
       .innerJoin(users, eq(parts.sellerId, users.id))
-      .where(eq(parts.isActive, true))
+      .where(and(...conditions))
       .orderBy(desc(parts.createdAt));
-
-    // Apply filters
-    if (filters) {
-      const conditions = [eq(parts.isActive, true)];
-
-      if (filters.search) {
-        const pattern = `%${filters.search}%`;
-        conditions.push(
-          or(
-            ilike(parts.name, pattern),
-            ilike(parts.carModel, pattern),
-            ilike(parts.description, pattern)
-          )
-        );
-      }
-
-      if (filters.carModel) {
-        conditions.push(ilike(parts.carModel, `%${filters.carModel}%`));
-      }
-
-      if (filters.condition) {
-        conditions.push(eq(parts.condition, filters.condition as "new" | "used"));
-      }
-
-      if (filters.location) {
-        conditions.push(ilike(users.location, `%${filters.location}%`));
-      }
-
-      if (filters.sellerType) {
-        conditions.push(eq(users.sellerType, filters.sellerType as "private" | "business"));
-      }
-
-      if (filters.maxPrice) {
-        conditions.push(sql`${parts.price} <= ${filters.maxPrice}`);
-      }
-
-      query = query.where(and(...conditions));
-    }
-
-    return await query;
   }
 
   async getPartById(id: string): Promise<PartWithSeller | undefined> {
@@ -188,7 +207,10 @@ export class DatabaseStorage implements IStorage {
         sellerId: parts.sellerId,
         name: parts.name,
         description: parts.description,
-        carModel: parts.carModel,
+        vehicleType: parts.vehicleType,
+        year: parts.year,
+        make: parts.make,
+        model: parts.model,
         condition: parts.condition,
         price: parts.price,
         images: parts.images,
@@ -314,7 +336,10 @@ export class DatabaseStorage implements IStorage {
         sellerId: parts.sellerId,
         name: parts.name,
         description: parts.description,
-        carModel: parts.carModel,
+        vehicleType: parts.vehicleType,
+        year: parts.year,
+        make: parts.make,
+        model: parts.model,
         condition: parts.condition,
         price: parts.price,
         images: parts.images,
