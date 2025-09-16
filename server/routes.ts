@@ -60,7 +60,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const filters = {
         search: req.query.search as string,
-        carModel: req.query.carModel as string,
+        vehicleType: req.query.vehicleType as string,
+        year: req.query.year ? Number(req.query.year) : undefined,
+        make: req.query.make as string,
+        model: req.query.model as string,
         condition: req.query.condition as string,
         location: req.query.location as string,
         sellerType: req.query.sellerType as string,
